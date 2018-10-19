@@ -142,13 +142,13 @@ double emb::compute_energy() {
 	SharedMatrix P_oo = S_sys_in_all->get_block(occ, occ);
 	SharedMatrix Uo(new Matrix("Uo", nirrep, noccpi, noccpi));
 	SharedVector lo(new Vector("lo", nirrep, noccpi));
-	P_oo->diagonalize(Uo, lo, ascending);
+	P_oo->diagonalize(Uo, lo, descending);
 	lo->print();
 
 	SharedMatrix P_vv = S_sys_in_all->get_block(vir, vir);
 	SharedMatrix Uv(new Matrix("Uv", nirrep, nvirpi, nvirpi));
 	SharedVector lv(new Vector("lv", nirrep, nvirpi));
-	P_vv->diagonalize(Uv, lv, ascending);
+	P_vv->diagonalize(Uv, lv, descending);
 	lv->print();
 
 	SharedMatrix U_all(new Matrix("U with Pab", nirrep, nmopi, nmopi));
@@ -233,8 +233,8 @@ double emb::compute_energy() {
 		Ca_Rt->set_column(0, i + sizeBO + sizeAO + sizeAV, Ca_->get_column(0, sizeBO + sizeAO + sizeAV + i));
 	}
 
-	outfile->Printf("\n  The MO coefficients after localization and rotation: \n", sizeBO);
-	Ca_Rt->print();
+	//outfile->Printf("\n  The MO coefficients after localization and rotation: \n", sizeBO);
+	//Ca_Rt->print();
 
 	//Update Ca_
 	Ca_->copy(Ca_Rt);
@@ -254,7 +254,7 @@ double emb::compute_energy() {
 
 		SharedMatrix Uao(new Matrix("Uoo", nirrep, AO, AO));
 		SharedVector lao(new Vector("loo", nirrep, AO));
-		Fa_AOAO->diagonalize(Uao, lao, descending);
+		Fa_AOAO->diagonalize(Uao, lao, ascending);
 		Fa_AOAO->zero();
 		for (int i = 0; i < AO[0]; ++i) {
 			Fa_AOAO->set(0, i, i, lao->get(0, i));
@@ -263,7 +263,7 @@ double emb::compute_energy() {
 
 		SharedMatrix Uav(new Matrix("Uvv", nirrep, AV, AV));
 		SharedVector lav(new Vector("lvv", nirrep, AV));
-		Fa_AVAV->diagonalize(Uav, lav, descending);
+		Fa_AVAV->diagonalize(Uav, lav, ascending);
 		Fa_AVAV->zero();
 		for (int i = 0; i < AV[0]; ++i) {
 			Fa_AVAV->set(0, i, i, lav->get(0, i));
@@ -287,12 +287,15 @@ double emb::compute_energy() {
 		Fa_loc->set_block(AOs, AOs, Fa_AOAO);
 		Fa_loc->set_block(AVs, AVs, Fa_AVAV);
 		Fa_->copy(Fa_loc);
-		Fa_->print();
+		//Fa_->print();
 
 		//Rotate Coeffs
 		outfile->Printf("\n Coefficients after canonicalization \n");
-		Ca_ = Matrix::doublet(Ca_Rt, U_all_2, false, false);
+		Ca_->copy(Matrix::doublet(Ca_Rt, U_all_2, false, false));
 		Ca_->print();
+
+		//S_ao->transform(Ca_);
+		//S_ao->print();
 	}
 
 

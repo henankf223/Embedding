@@ -1,0 +1,72 @@
+
+# PYTHONPATH must include directory above plugin directory.
+#     Define either externally or here, then import plugin.
+sys.path.insert(0, './../../..')
+import embedding
+import forte
+import ownmp2
+
+molecule {
+     0 1
+     O  -3.535769   3.084336  -0.905856
+     C  -4.184301   4.243079  -1.205620
+     H  -4.722911   4.736433  -0.476563
+     H  -4.137341   4.628168  -2.161929
+     --
+#     0 1
+#     O  -101.551007  -0.114520   0.000000
+#     H  -101.934259   0.762503   0.000000
+#     H  -100.599677   0.040712   0.000000
+
+     units angstrom
+     no_reorient
+     symmetry c1
+}
+
+set {
+  basis sto-3g
+  scf_type pk
+}
+
+set embedding {
+  print 1
+  threshold 0.5
+  semicanon true
+}
+
+E, wfn = energy('embedding', return_wfn = True)
+
+E, wfn = energy('scf', return_wfn=True)
+
+set {
+  mp2_type conv
+}
+
+energy('mp2', ref_wfn=wfn)
+
+set ownmp2 {
+  print 1
+  reference hf_readF
+  ROTATE_INT calculate
+}
+
+energy('ownmp2', ref_wfn=wfn)
+
+#set forte {
+#  job_type           active-dsrgpt2
+#  cino               false
+#  frozen_docc        [0]
+#  restricted_docc    [2]
+#  active             [10]
+#  frozen_uocc        [0]
+#  cas_type           cas
+#  fcimo_actv_type    cisd
+#  nrootpi            [10]
+## print              2
+#  d_convergence      10
+#  dsrg_s             0.5
+## internal_amp       singles_doubles
+#}
+
+#Eforte, wfn_cas = energy('forte', ref_wfn=wfn, return_wfn=True)
+

@@ -29,6 +29,7 @@
  */
 
 #include "psi4/psi4-dec.h"
+#include "psi4/libmints/matrix.h"
 #include "psi4/libpsi4util/PsiOutStream.h"
 #include "psi4/liboptions/liboptions.h"
 #include "psi4/libmints/wavefunction.h"
@@ -50,6 +51,7 @@ int read_options(std::string name, Options& options)
 		options.add_double("THRESHOLD", 0.5);
 		options.add_str("REFERENCE", "HF");
 		options.add_bool("WRITE_FREEZE_MO", true);
+		options.add_bool("SEMICANON", false);
     }
 
     return true;
@@ -60,6 +62,7 @@ SharedWavefunction embedding(SharedWavefunction ref_wfn, Options& options)
 {
 	emb e1(ref_wfn, options);
 	e1.compute_energy();
+
 	return ref_wfn;
 }
 
