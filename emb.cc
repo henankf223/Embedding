@@ -78,11 +78,11 @@ double emb::compute_energy() {
 	std::vector<int> env_list = { 1 }; // change to 1-nfrag in the future!
 
 	std::shared_ptr<Molecule> mol_sys = mol->extract_subsets(sys_list, none_list);
-	//std::shared_ptr<Molecule> mol_env = mol->extract_subsets(env_list, none_list);
+	std::shared_ptr<Molecule> mol_env = mol->extract_subsets(env_list, none_list);
 	outfile->Printf("\n System Fragment \n");
 	mol_sys->print();
-	//outfile->Printf("\n Environment Fragment(s) \n");
-	//mol_env->print();
+	outfile->Printf("\n Environment Fragment(s) \n");
+	mol_env->print();
 
 	std::shared_ptr<BasisSet> basis = reference_wavefunction_->basisset();
 	Dimension nmopi = reference_wavefunction_->nmopi();
@@ -238,16 +238,14 @@ double emb::compute_energy() {
 
 	//Update Ca_
 	Ca_->copy(Ca_Rt);
-	outfile->Printf("\n  FROZEN_DOCC     = %d", sizeBO);
-	outfile->Printf("\n  FROZEN_UOCC	 = %d", sizeBV);
 
 	if (options_.get_bool("SEMICANON") == true) {
 		outfile->Printf("\n *** Semi-canonicalization *** \n");
 
 		//Build Fock in localized basis
 		SharedMatrix Fa_loc = Matrix::triplet(Ca_Rt, Fa_, Ca_Rt, true, false, false);
-		outfile->Printf("\n Fock matrix in localized basis: \n");
-		Fa_loc->print();
+		//outfile->Printf("\n Fock matrix in localized basis: \n");
+		//Fa_loc->print();
 		outfile->Printf("\n");
 		SharedMatrix Fa_AOAO = Fa_loc->get_block(AOs, AOs);
 		SharedMatrix Fa_AVAV = Fa_loc->get_block(AVs, AVs);
@@ -259,7 +257,7 @@ double emb::compute_energy() {
 		for (int i = 0; i < AO[0]; ++i) {
 			Fa_AOAO->set(0, i, i, lao->get(0, i));
 		}
-		Fa_AOAO->print();
+		//Fa_AOAO->print();
 
 		SharedMatrix Uav(new Matrix("Uvv", nirrep, AV, AV));
 		SharedVector lav(new Vector("lvv", nirrep, AV));
@@ -268,7 +266,7 @@ double emb::compute_energy() {
 		for (int i = 0; i < AV[0]; ++i) {
 			Fa_AVAV->set(0, i, i, lav->get(0, i));
 		}
-		Fa_AVAV->print();
+		//Fa_AVAV->print();
 
 		//Build transformation matrix
 		SharedMatrix U_all_2(new Matrix("U with Pab", nirrep, nmopi, nmopi));
@@ -280,33 +278,42 @@ double emb::compute_energy() {
 		U_all_2->set_block(AVs, AVs, Uav);
 		U_all_2->set_block(BOs, BOs, Ubo);
 		U_all_2->set_block(BVs, BVs, Ubv);
-		U_all_2->print();
+		//U_all_2->print();
 		
 		//Build new Fock
-		outfile->Printf("\n Fock matrix in localized basis afer canonicalization: \n");
+		//outfile->Printf("\n Fock matrix in localized basis afer canonicalization: \n");
 		Fa_loc->set_block(AOs, AOs, Fa_AOAO);
 		Fa_loc->set_block(AVs, AVs, Fa_AVAV);
 		Fa_->copy(Fa_loc);
 		//Fa_->print();
 
 		//Rotate Coeffs
-		outfile->Printf("\n Coefficients after canonicalization \n");
+		//outfile->Printf("\n Coefficients after canonicalization \n");
 		Ca_->copy(Matrix::doublet(Ca_Rt, U_all_2, false, false));
-		Ca_->print();
+		//Ca_->print();
 
 		//S_ao->transform(Ca_);
 		//S_ao->print();
 	}
 
-
 	//Write MO space info and print
+	outfile->Printf("\n  FROZEN_DOCC     = %d", sizeBO);
+	outfile->Printf("\n  FROZEN_UOCC	 = %d", sizeBV);
+
 	if (options_.get_bool("WRITE_FREEZE_MO") == true) {
+		options_["FROZEN_DOCC"].add(0);
+		options_["FROZEN_UOCC"].add(0);
+		options_["FROZEN_DOCC"][0].assign(sizeBO);
+		options_["FROZEN_UOCC"][0].assign(sizeBV);
+
+		/*
 		for (int h = 0; h < nirrep_; h++) {
 			options_["FROZEN_DOCC"].add(h);
 			options_["FROZEN_UOCC"].add(h);
 			options_["FROZEN_DOCC"][h].assign(sizeBO);
 			options_["FROZEN_UOCC"][h].assign(sizeBV);
 		}
+		*/
 	}
 
 	return 0.0;
